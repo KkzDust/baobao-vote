@@ -5,7 +5,7 @@ var N=[{"name":"柯文正","w1":"文","w2":"正","ws":4,"gs":5,"ren":13,"di":9,"
 // ===== Supabase config =====
 var SUPABASE_URL = "https://sfspvkvnehvxlymrpyas.supabase.co";
 var SUPABASE_ANON_KEY = "sb_publishable_B7-cd4Tai-q9BmPM0-SGDw_7zaavMA7";
-var supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var sbClient = supabase({}).createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 var allV = {};
 var sbEl = document.getElementById("syncStatus");
@@ -19,7 +19,7 @@ function sb(msg, err){
 }
 
 function loadVotes(cb){
-  supabaseClient.from("baby_votes").select("voter_id,names").then(function(res){
+  sbClient.from("baby_votes").select("voter_id,names").then(function(res){
     if(res.error){ sb("加载失败:"+res.error.message,1); if(cb)cb(); return; }
     allV = {};
     res.data.forEach(function(row){ allV[row.voter_id] = row.names||[]; });
@@ -29,7 +29,7 @@ function loadVotes(cb){
 
 function saveMyVote(names, cb){
   allV[vid] = names;
-  supabaseClient.from("baby_votes").upsert(
+  sbClient.from("baby_votes").upsert(
     { voter_id: vid, names: names, updated_at: new Date().toISOString() },
     { onConflict: "voter_id" }
   ).then(function(res){
@@ -40,7 +40,7 @@ function saveMyVote(names, cb){
 
 function deleteMyVote(cb){
   delete allV[vid];
-  supabaseClient.from("baby_votes").delete().eq("voter_id", vid).then(function(res){
+  sbClient.from("baby_votes").delete().eq("voter_id", vid).then(function(res){
     if(res.error){ sb("删除失败:"+res.error.message,1); }
     if(cb) cb();
   }).catch(function(e){ sb("删除失败:"+e.message,1); if(cb)cb(); });
